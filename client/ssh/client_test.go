@@ -613,7 +613,7 @@ func TestSSHClient_PipedCommand(t *testing.T) {
 	// Test with piped commands that don't require PTY
 	var pipeCmd string
 	if runtime.GOOS == "windows" {
-		pipeCmd = "echo hello world | findstr hello"
+		pipeCmd = "echo hello world | Select-String hello"
 	} else {
 		pipeCmd = "echo 'hello world' | grep hello"
 	}
@@ -1112,9 +1112,9 @@ func TestBehaviorRegression(t *testing.T) {
 				command string
 			}{
 				{"simple echo", "echo test"},
-				{"current directory", "cd"},
-				{"list files", "dir"},
-				{"system info", "systeminfo | findstr /B /C:\"OS Name\""},
+				{"current directory", "Get-Location"},
+				{"list files", "Get-ChildItem"},
+				{"system info", "$PSVersionTable.PSVersion"},
 			}
 		} else {
 			testCases = []struct {
@@ -1231,9 +1231,9 @@ func TestSSHClient_NonZeroExitCodes(t *testing.T) {
 			name    string
 			command string
 		}{
-			{"findstr no match", "echo hello | findstr notfound"},
-			{"exit 1 command", "cmd /c exit 1"},
-			{"dir nonexistent", "dir C:\\nonexistent\\path"},
+			{"select-string no match", "echo hello | Select-String notfound"},
+			{"exit 1 command", "throw \"exit with code 1\""},
+			{"get-childitem nonexistent", "Get-ChildItem C:\\nonexistent\\path"},
 		}
 	} else {
 		testCases = []struct {

@@ -81,7 +81,8 @@ func (c *Client) handleSessionError(err error) error {
 	}
 
 	var e *ssh.ExitError
-	if !errors.As(err, &e) {
+	var em *ssh.ExitMissingError
+	if !errors.As(err, &e) && !errors.As(err, &em) {
 		// Only return actual errors (not exit status errors)
 		return fmt.Errorf("session wait: %w", err)
 	}
@@ -89,6 +90,7 @@ func (c *Client) handleSessionError(err error) error {
 	// SSH should behave like regular command execution:
 	// Non-zero exit codes are normal and should not be treated as errors
 	// The command ran successfully, it just returned a non-zero exit code
+	// ExitMissingError is also normal - session was torn down cleanly
 	return nil
 }
 
@@ -116,12 +118,14 @@ func (c *Client) ExecuteCommand(ctx context.Context, command string) ([]byte, er
 	output, err := session.CombinedOutput(command)
 	if err != nil {
 		var e *ssh.ExitError
-		if !errors.As(err, &e) {
+		var em *ssh.ExitMissingError
+		if !errors.As(err, &e) && !errors.As(err, &em) {
 			// Only return actual errors (not exit status errors)
 			return output, fmt.Errorf("execute command: %w", err)
 		}
 		// SSH should behave like regular command execution:
 		// Non-zero exit codes are normal and should not be treated as errors
+		// ExitMissingError is also normal - session was torn down cleanly
 		// Return the output even for non-zero exit codes
 	}
 
@@ -210,10 +214,14 @@ func (c *Client) handleCommandError(err error) error {
 	}
 
 	var e *ssh.ExitError
-	if !errors.As(err, &e) {
+	var em *ssh.ExitMissingError
+	if !errors.As(err, &e) && !errors.As(err, &em) {
 		return fmt.Errorf("execute command: %w", err)
 	}
 
+	// SSH should behave like regular command execution:
+	// Non-zero exit codes are normal and should not be treated as errors
+	// ExitMissingError is also normal - session was torn down cleanly
 	return nil
 }
 
