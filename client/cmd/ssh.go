@@ -40,6 +40,13 @@ Examples:
 	DisableFlagParsing: true,
 	Args:               validateSSHArgsWithoutFlagParsing,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Check if help was requested
+		for _, arg := range args {
+			if arg == "-h" || arg == "--help" {
+				return cmd.Help()
+			}
+		}
+
 		SetFlagsFromEnvVars(rootCmd)
 		SetFlagsFromEnvVars(cmd)
 
