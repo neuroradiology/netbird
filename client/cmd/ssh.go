@@ -185,10 +185,16 @@ func runSSH(ctx context.Context, addr string, pemKey []byte, cmd *cobra.Command)
 
 	if command != "" {
 		if err := c.ExecuteCommandWithIO(ctx, command); err != nil {
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return nil
+			}
 			return err
 		}
 	} else {
 		if err := c.OpenTerminal(ctx); err != nil {
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return nil
+			}
 			return err
 		}
 	}

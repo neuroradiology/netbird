@@ -18,8 +18,8 @@ type Client struct {
 	terminalState *term.State
 	terminalFd    int
 	// Windows-specific console state
-	windowsStdoutMode uint32
-	windowsStdinMode  uint32
+	windowsStdoutMode uint32 // nolint:unused // Used in Windows-specific terminal restoration
+	windowsStdinMode  uint32 // nolint:unused // Used in Windows-specific terminal restoration
 }
 
 // Close terminates the SSH connection
@@ -149,7 +149,15 @@ func (c *Client) ExecuteCommandWithIO(ctx context.Context, command string) error
 	select {
 	case <-ctx.Done():
 		_ = session.Signal(ssh.SIGTERM)
-		return nil
+		// Wait a bit for the signal to take effect, then return context error
+		select {
+		case <-done:
+			// Process exited due to signal, this is expected
+			return ctx.Err()
+		case <-time.After(100 * time.Millisecond):
+			// Signal didn't take effect quickly, still return context error
+			return ctx.Err()
+		}
 	case err := <-done:
 		return c.handleCommandError(err)
 	}
@@ -182,7 +190,15 @@ func (c *Client) ExecuteCommandWithPTY(ctx context.Context, command string) erro
 	select {
 	case <-ctx.Done():
 		_ = session.Signal(ssh.SIGTERM)
-		return nil
+		// Wait a bit for the signal to take effect, then return context error
+		select {
+		case <-done:
+			// Process exited due to signal, this is expected
+			return ctx.Err()
+		case <-time.After(100 * time.Millisecond):
+			// Signal didn't take effect quickly, still return context error
+			return ctx.Err()
+		}
 	case err := <-done:
 		return c.handleCommandError(err)
 	}
@@ -195,13 +211,9 @@ func (c *Client) handleCommandError(err error) error {
 
 	var e *ssh.ExitError
 	if !errors.As(err, &e) {
-		// Only return actual errors (not exit status errors)
 		return fmt.Errorf("execute command: %w", err)
 	}
 
-	// SSH should behave like regular command execution:
-	// Non-zero exit codes are normal and should not be treated as errors
-	// The command ran successfully, it just returned a non-zero exit code
 	return nil
 }
 
