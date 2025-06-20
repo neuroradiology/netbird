@@ -32,9 +32,9 @@ var sshCmd = &cobra.Command{
 
 Examples:
   netbird ssh peer-hostname
-  netbird ssh user@peer-hostname
-  netbird ssh peer-hostname --login myuser
-  netbird ssh peer-hostname -p 22022
+  netbird ssh root@peer-hostname
+  netbird ssh --login root peer-hostname
+  netbird ssh peer-hostname
   netbird ssh peer-hostname ls -la
   netbird ssh peer-hostname whoami`,
 	DisableFlagParsing: true,
